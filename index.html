@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Valentine?</title>
+  <style>
+    :root{
+      --bg1:#ffdde1;
+      --bg2:#ee9ca7;
+
+      /* sharper glass (less fog) */
+      --glass: rgba(255,255,255,.16);
+      --glass2: rgba(255,255,255,.12);
+      --glassBorder: rgba(255,255,255,.28);
+
+      --ink:#ffffff;
+      --shadow: 0 18px 55px rgba(0,0,0,.30);
+    }
+    *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;}
+    html,body{height:100%;}
+    body{
+      margin:0;
+      min-height:100vh;
+      /* IMPORTANT: start centered, but allow scroll */
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 18px 12px;
+      background: linear-gradient(135deg,var(--bg1),var(--bg2));
+      overflow-x:hidden;
+      overflow-y:auto;
+      color:var(--ink);
+      transition: background .6s ease;
+    }
+
+    /* After Yes: align to top so card can scroll naturally */
+    body.revealed{
+      align-items:flex-start;
+      justify-content:center;
+      padding-top: 18px;
+      padding-bottom: 28px;
+    }
+
+    /* Background image mode */
+    body.bg-photo{
+      background: #000;
+      background-image: var(--bgImage);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    /* Darken background for readability (helps a LOT) */
+    body.bg-photo::before{
+      content:"";
+      position:fixed; inset:0;
+      /* stronger overlay + subtle vignette */
+      background:
+        radial-gradient(ellipse at center, rgba(0,0,0,.10), rgba(0,0,0,.65)),
+        linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,.35));
+      pointer-events:none;
+      z-index:0;
+    }
+
+    .card{
+  width:min(620px,92vw);
+
+  /* more transparent */
+  background: rgba(255,255,255,.10);
+
+  /* less blur so photo shows through */
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+
+  border: 1px solid rgba(255,255,255,.22);
+  border-radius: 26px;
+  padding: 22px;
+  box-shadow: 0 18px 55px rgba(0,0,0,.30);
+  text-align:center;
+  position:relative;
+  z-index:2;
+
+  max-height: calc(100vh - 36px);
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+
+    h1{
+      margin:0 0 8px;
+      font-size:30px;
+      text-shadow:0 10px 26px rgba(0,0,0,.35);
+    }
+    p{
+      margin:0 0 18px;
+      opacity:.95;
+      line-height:1.55;
+      text-shadow:0 10px 22px rgba(0,0,0,.32);
+    }
+
+    .buttons{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:10px;}
+    button{
+      border:0; padding:12px 18px; border-radius:999px;
+      font-size:16px; cursor:pointer;
+      transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+      user-select:none;
+    }
+    button:hover{transform: translateY(-1px); box-shadow:0 10px 22px rgba(0,0,0,.18)}
+    button:active{transform: translateY(0px); filter:brightness(.97)}
+    #yes{background:#ff2f76;color:white;}
+    #no{background:rgba(255,255,255,.88);color:#111;}
+    .hidden{display:none;}
+
+    .revealWrap{
+      text-align:left;
+      background: var(--glass2);
+      backdrop-filter: blur(7px);
+      -webkit-backdrop-filter: blur(7px);
+      border-radius: 22px;
+      border: 1px solid var(--glassBorder);
+      padding: 16px;
+      margin-top: 14px;
+    }
+
+    .sealRow{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+    .badge{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 12px; border-radius:999px;
+      background: rgba(255,47,118,.20);
+      border: 1px solid rgba(255,47,118,.30);
+      font-weight:700;
+      color:#fff;
+      text-shadow:0 10px 22px rgba(0,0,0,.30);
+    }
+    .miniBtn{
+      background: rgba(17,17,17,.85);
+      color:#fff;
+      padding:10px 14px; border-radius:999px; font-size:14px;
+      border: 1px solid rgba(255,255,255,.20);
+      box-shadow:0 10px 22px rgba(0,0,0,.22);
+    }
+
+    /* Letter background: make it clearer (less fog) */
+ .letter{
+  margin-top:14px;
+  padding: 16px;
+  border-radius:18px;
+
+  /* lighter than before so photo shows */
+  background: rgba(0,0,0,.18);
+  border: 1px solid rgba(255,255,255,.18);
+}
+
+    .type{
+      font-size:16px;
+      line-height:1.70;
+      white-space:pre-wrap;
+      min-height: 160px;
+      color:#fff;
+      text-shadow:0 10px 22px rgba(0,0,0,.40);
+    }
+
+    .divider{
+      height:1px; background:rgba(255,255,255,.20);
+      margin:14px 0;
+    }
+
+    .steps{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+    }
+    @media(min-width: 520px){
+      .steps{grid-template-columns: 1fr 1fr;}
+    }
+
+   .stepCard{
+  padding:12px;
+  border-radius:16px;
+
+  /* lighter panels */
+  background: rgba(0,0,0,.14);
+  border: 1px solid rgba(255,255,255,.16);
+
+  transition: transform .12s ease, box-shadow .12s ease;
+  cursor:pointer;
+  color:#fff;
+}
+    .stepCard:hover{transform: translateY(-1px); box-shadow:0 10px 18px rgba(0,0,0,.18)}
+    .stepTitle{font-weight:800; margin:0 0 6px; text-shadow:0 10px 22px rgba(0,0,0,.35)}
+    .stepBody{margin:0; opacity:.96; text-shadow:0 10px 22px rgba(0,0,0,.32)}
+
+    .footerRow{
+      display:flex; gap:10px; flex-wrap:wrap; justify-content:center;
+      margin-top: 14px;
+    }
+
+    /* Hearts rain */
+    .heartsLayer{
+      position:fixed; inset:0;
+      pointer-events:none;
+      overflow:hidden;
+      z-index:1;
+      opacity:0;
+      transition: opacity .4s ease;
+    }
+    .heartsLayer.on{opacity:1;}
+    .heart{
+      position:absolute;
+      top:-10vh;
+      font-size: 18px;
+      filter: drop-shadow(0 6px 10px rgba(0,0,0,.25));
+      animation: fall linear forwards;
+      will-change: transform;
+      opacity:.95;
+    }
+    @keyframes fall{
+      to { transform: translateY(120vh) translateX(var(--drift)); opacity: 0.95; }
+    }
+
+    @media (max-width: 520px){
+  body.bg-photo::before{
+    /* slightly less dark on mobile so photo is visible */
+    background:
+      radial-gradient(ellipse at center, rgba(0,0,0,.08), rgba(0,0,0,.50)),
+      linear-gradient(180deg, rgba(0,0,0,.18), rgba(0,0,0,.28));
+  }
+
+  .card{
+    background: rgba(255,255,255,.08);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+
+  .letter{ background: rgba(0,0,0,.14); }
+  .stepCard{ background: rgba(0,0,0,.12); }
+}
+
+
+    /* Optional: always show a slim scrollbar on desktop */
+    .card::-webkit-scrollbar{width:10px;}
+    .card::-webkit-scrollbar-thumb{background:rgba(255,255,255,.22); border-radius:999px;}
+  </style>
+</head>
+<body>
+
+  <div class="heartsLayer" id="heartsLayer"></div>
+  <audio id="bgm" src="the_mountain-love-481753.mp3" preload="auto" loop></audio>
+
+  <div class="card">
+    <div id="ask">
+      <h1>Will you be my Valentine? 💖</h1>
+      <p>Tap wisely 😌</p>
+      <div class="buttons">
+        <button id="yes">Yes</button>
+        <button id="no">No</button>
+      </div>
+    </div>
+
+    <div id="reveal" class="hidden">
+      <h1>YAYYYYY! 🥰</h1>
+      <p>Okay… now read this. Slowly.</p>
+
+      <div class="revealWrap">
+        <div class="sealRow">
+          <div class="badge">💌 A letter for you</div>
+          <button class="miniBtn" id="toggleMusic">🔊 Music: On</button>
+        </div>
+
+        <div class="letter">
+          <div class="type" id="typed"></div>
+          <div class="divider"></div>
+
+          <p style="margin:0 0 10px; font-weight:800; color:#fff;">
+            4 things I like most 👇
+          </p>
+
+          <div class="steps" id="steps"></div>
+
+          
+        </div>
+      </div>
+
+      <p style="margin-top:12px;font-size:12px;opacity:.85">Made by Bubu ❤️</p>
+    </div>
+  </div>
+
+  <script>
+    const BG_DESKTOP = "bg-desktop.jpeg";
+    const BG_MOBILE  = "bg-mobile.jpeg";
+
+    function setResponsiveBg(){
+      const isMobile = window.matchMedia("(max-width: 768px)").matches;
+      const chosen = isMobile ? BG_MOBILE : BG_DESKTOP;
+      document.body.style.setProperty("--bgImage", `url('${chosen}')`);
+    }
+    window.addEventListener("resize", setResponsiveBg);
+
+    const LETTER = [
+      "Hii Chooti boolee,",
+      "",
+      "I just want you to know something simple and true:",
+      "I may not be perfect at love. But I love you from the bottom of my heart, manika.",
+      "",
+      "I don’t want only a Valentine… I want you for my lifetime.",
+      "",
+      "Not just the cute days… even the hard days.",
+      "Not just the dates… even the quiet weeks where we can't see each other.",
+      "",
+      "You’re not just a part of my life… you’re my favorite part.",
+      "My safe place. My smile. My peace.",
+      "",
+      "And if I’m being honest, my only dream is simple:",
+      "to marry you… and then go for our dreams together.",
+      "",
+      "So today I’m asking with my whole heart:",
+      "Will you be my Valentine? 💖"
+    ].join("\n");
+
+    const CARDS = [
+      {
+    title: "💗 Love",
+    body: "I got the love I needed… and I love you back even more than that."
+  },
+  {
+    title: "✨ Future",
+    body: "You are my future dream. My world is you."
+  },
+  {
+    title: "💣 My little troublemaker",
+    body: "I got the most dangerous ‘nuclear bomb’… the version of you when you get angry 😭❤️"
+  },
+  {
+    title: "😈 Being naughty",
+    body: "Make me hard with using your sexy hacks 🤤😘"
+  }
+    ];
+
+    const yes = document.getElementById("yes");
+    const no = document.getElementById("no");
+    const ask = document.getElementById("ask");
+    const reveal = document.getElementById("reveal");
+    const typedEl = document.getElementById("typed");
+    const stepsEl = document.getElementById("steps");
+    const heartsLayer = document.getElementById("heartsLayer");
+
+    const bgm = document.getElementById("bgm");
+    const toggleMusicBtn = document.getElementById("toggleMusic");
+
+    // NO runs away
+    no.addEventListener("mouseover", () => {
+      const card = document.querySelector(".card");
+      const rect = card.getBoundingClientRect();
+      const btnRect = no.getBoundingClientRect();
+      const maxX = rect.width - btnRect.width - 24;
+      const maxY = rect.height - btnRect.height - 24;
+
+      const x = Math.random() * maxX;
+      const y = Math.random() * maxY;
+
+      no.style.position = "absolute";
+      no.style.left = x + "px";
+      no.style.top = y + "px";
+    });
+
+    // Typewriter
+    let typingTimer = null;
+    function typeLetter(text, speed=16){
+      clearInterval(typingTimer);
+      typedEl.textContent = "";
+      let i = 0;
+      typingTimer = setInterval(() => {
+        typedEl.textContent += text[i] ?? "";
+        i++;
+        if(i >= text.length) clearInterval(typingTimer);
+      }, speed);
+    }
+
+    // Hearts
+    let heartInterval = null;
+    function startHearts(){
+      heartsLayer.classList.add("on");
+      if(heartInterval) clearInterval(heartInterval);
+
+      heartInterval = setInterval(() => {
+        const h = document.createElement("div");
+        h.className = "heart";
+        h.textContent = Math.random() < 0.6 ? "💖" : (Math.random() < 0.5 ? "💕" : "💗");
+        const left = Math.random() * 100;
+        const size = 14 + Math.random() * 18;
+        const duration = 4 + Math.random() * 4;
+        const drift = (-30 + Math.random() * 60) + "px";
+
+        h.style.left = left + "vw";
+        h.style.fontSize = size + "px";
+        h.style.animationDuration = duration + "s";
+        h.style.setProperty("--drift", drift);
+
+        heartsLayer.appendChild(h);
+        setTimeout(() => h.remove(), (duration + 0.2) * 1000);
+      }, 120);
+    }
+
+    // Music
+    let musicOn = true;
+    async function playMusic(){
+      try {
+        await bgm.play();
+        musicOn = true;
+        toggleMusicBtn.textContent = "🔊 Music: On";
+      } catch {
+        musicOn = false;
+        toggleMusicBtn.textContent = "🔇 Tap to play";
+      }
+    }
+    toggleMusicBtn.addEventListener("click", async () => {
+      if(!musicOn){
+        await playMusic();
+      } else {
+        bgm.pause();
+        musicOn = false;
+        toggleMusicBtn.textContent = "🔇 Music: Off";
+      }
+    });
+
+    // Cards
+    function renderCards(){
+      stepsEl.innerHTML = "";
+      CARDS.forEach((c) => {
+        const el = document.createElement("div");
+        el.className = "stepCard";
+        el.innerHTML = `<p class="stepTitle">${c.title}</p><p class="stepBody">${c.body}</p>`;
+        el.addEventListener("click", () => {
+          el.style.transform = "translateY(-2px) scale(1.01)";
+          setTimeout(()=> el.style.transform = "", 140);
+        });
+        stepsEl.appendChild(el);
+      });
+    }
+
+    // YES click
+    yes.addEventListener("click", async () => {
+      ask.classList.add("hidden");
+      reveal.classList.remove("hidden");
+
+      // allow scroll layout
+      document.body.classList.add("revealed");
+
+      setResponsiveBg();
+      document.body.classList.add("bg-photo");
+
+      startHearts();
+      renderCards();
+      typeLetter(LETTER, 16);
+
+      await playMusic();
+
+      // ensure we start at top of card on mobile
+      document.querySelector(".card").scrollTop = 0;
+    });
+
+    // Replay
+    document.getElementById("replay").addEventListener("click", () => {
+      typeLetter(LETTER, 16);
+      document.querySelector(".card").scrollTop = 0;
+    });
+
+    // Copy link
+    document.getElementById("copyLink").addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(location.href);
+        alert("Link copied!");
+      } catch {
+        prompt("Copy this link:", location.href);
+      }
+    });
+  </script>
+</body>
+</html>
